@@ -157,6 +157,8 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;whatsapp&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;5511999999999&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Reserva&quot;}}">
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8DREL6lAq-aYvN3u_w1Y9YIAtajp8kkA-D79V7i7M3W5VBZg1IzDy88xWAoJi1nwLgA/exec";
+
 const MENU = [
   { id: "pratos-do-dia", title: "Pratos do dia", note: "Servidos no almoço, das 11h às 14h.", items: [
     { name: "Frango grill vinagrete", kind: "Prato principal", photo: true, src: "./uploads/pasted-1787774686804-0.png" },
@@ -196,14 +198,18 @@ const TIMES = ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30"];
 const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-");
 
 class Component extends DCLogic {
-  state = { sheetOpen: false, active: "pratos-do-dia", time: "12:00", people: 2, name: "", obs: "", date: "" };
+  state = { sheetOpen: false, active: "pratos-do-dia", time: "12:00", people: 2, name: "", obs: "", date: "", menu: MENU, loading: false };
 
   componentDidMount() {
     const d = new Date();
     this.setState({ date: d.toISOString().slice(0, 10) });
+    fetch(SCRIPT_URL)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length) this.setState({ menu: data }); })
+      .catch(() => {});
     this.onScroll = () => {
       let active = this.state.active;
-      for (const s of MENU) {
+      for (const s of this.state.menu) {
         const el = document.getElementById(s.id);
         if (el && el.getBoundingClientRect().top <= 160) active = s.id;
       }
@@ -238,8 +244,8 @@ class Component extends DCLogic {
       openSheet: () => this.setState({ sheetOpen: true }),
       closeSheet: () => this.setState({ sheetOpen: false }),
       stop: (e) => e.stopPropagation(),
-      tabs: MENU.map((m) => ({ label: m.title, style: this.chip(s.active === m.id), go: () => this.goTo(m.id) })),
-      sections: MENU.map((m) => ({
+      tabs: s.menu.map((m) => ({ label: m.title, style: this.chip(s.active === m.id), go: () => this.goTo(m.id) })),
+      sections: s.menu.map((m) => ({
         id: m.id, title: m.title, note: m.note,
         items: m.items.map((it) => ({ name: it.name, kind: it.kind, photo: !!it.photo, src: it.src || "", slot: "santtini-" + slug(it.name) }))
       })),
