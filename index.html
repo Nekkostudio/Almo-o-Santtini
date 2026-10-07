@@ -203,7 +203,7 @@ class Component extends DCLogic {
   componentDidMount() {
     const d = new Date();
     this.setState({ date: d.toISOString().slice(0, 10) });
-    fetch(SCRIPT_URL)
+    fetch(SCRIPT_URL + '?t=' + Date.now())
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length) this.setState({ menu: data }); })
       .catch(() => {});
